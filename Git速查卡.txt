@@ -1,0 +1,191 @@
+====================================================================
+  Git 速查卡（STM32 学习用）
+  Windows + Git Bash + Keil MDK     仓库：xx893/stm32_led_demo
+  更新：2026-09-27
+====================================================================
+
+【0】这台电脑的固定信息
+--------------------------------------------------------------------
+工程目录（资源管理器） : E:\STM32\stm32_led_demo
+工程目录（Git Bash）   : /e/STM32/stm32_led_demo
+仓库网页               : https://github.com/xx893/stm32_led_demo
+远程别名 origin 指向   : git@github.com:xx893/stm32_led_demo.git
+主分支                 : main
+密钥                   : C:\Users\项欣妮\.ssh\id_ed25519（.pub 是公钥）
+ssh 程序（已配好）     : C:/Windows/System32/OpenSSH/ssh.exe
+
+· Git Bash 里路径怎么写：E:\STM32\xx  →  /e/STM32/xx
+  （分隔符全用 / ，别用 \ ，\ 在 Git Bash 里是转义符，会被吃掉）
+· 进目录最快的办法：资源管理器里打开工程文件夹 → 空白处右键 → Git Bash Here
+· 手敲就是：    cd /e/STM32/stm32_led_demo
+
+
+【1】日常上传（最常用，记住这一组就够）
+--------------------------------------------------------------------
+    git status                        # 看看改了哪些文件（建议看一眼）
+    git add .                         # 放进待提交区，新建的文件也算
+    git commit -m "说明这次改了啥"      # 在本地存一个档
+    git push                          # 上传到 GitHub
+
+口诀：改完 → add → commit → push
+
+· Keil 里新建的 .c/.h 文件必须靠 git add . 才会进仓库，不会自动上传
+· Keil 编译产生的 Objects/、Listings/、.axf、.hex 被 .gitignore 挡住，不用管
+· 提交说明写清楚，例如 "增加按键中断，修复LED闪烁bug"，别只写"修改"
+· 只 commit 不 push，GitHub 上什么都看不到
+
+
+【2】查看情况
+--------------------------------------------------------------------
+    git status               # 当前有哪些改动
+    git log --oneline        # 历史提交，一行一条
+    git log --oneline -5     # 只看最近 5 条
+    git show 哈希            # 看某次提交具体改了什么
+    git diff                 # 看还没 add 的改动内容
+    git branch               # 有哪些分支，* 是当前所在
+    git branch -vv           # 分支 + 各自关联的远程分支
+    git remote -v            # origin 指向哪个地址
+
+
+【3】从零新建一个仓库并上传
+--------------------------------------------------------------------
+GitHub 网页：右上角 + → New repository → 填英文仓库名
+             三个勾（README / .gitignore / License）都不要勾 → Create
+
+Git Bash：
+    cd /e/STM32/新工程目录                       # 进到工程文件夹
+    git init                                     # 初始化（默认已经是 main）
+    cp /e/STM32/stm32_led_demo/.gitignore .      # 复用过滤规则，必须在 add 之前
+    git add .
+    git status                                   # 确认没有 Objects/ Listings/
+    git commit -m "初始版本：xxx"
+    git remote add origin git@github.com:xx893/新仓库名.git
+    git push -u origin main                      # 第一次推送要带 -u
+
+-u 的作用：让本地分支和远程分支"结对"，只在这条分支第一次推送时需要，
+之后直接 git push 就行。忘了加的报错是：
+    fatal: The current branch xx has no upstream branch
+照提示补一条 git push -u origin xx 就永久记住了。
+
+
+【4】分支：不影响主线的前提下开发新功能
+--------------------------------------------------------------------
+    git switch -c uart_demo          # 新建并切到 uart_demo 分支
+    # ……在这里改代码、编译、测试……
+    git add .
+    git commit -m "增加串口收发功能"
+    git push -u origin uart_demo     # 这个分支第一次推送，带 -u
+
+功能没问题了，合并回主线：
+    git switch main                  # 切回主线
+    git pull                         # 确保主线是最新的
+    git merge uart_demo              # 把分支的改动合并进来
+    git push                         # 把合并结果推上去
+
+收拾干净（可选）：
+    git branch -d uart_demo             # 删除本地分支
+    git push origin --delete uart_demo  # 删除 GitHub 上的分支
+
+其他：git switch main 切回主线；git switch - 回到上一个分支；git branch 看所有分支
+
+
+【5】换电脑 / 重装系统后拿回代码
+--------------------------------------------------------------------
+    cd /d/STM32
+    git clone git@github.com:xx893/stm32_led_demo.git
+    cd stm32_led_demo
+
+clone 下来的仓库，远程和分支关系都是自动配好的，直接能 push / pull。
+
+
+【6】撤销 / 回到以前的版本
+--------------------------------------------------------------------
+    git restore User/main.c    # 丢弃这个文件还没提交的改动（回到上次提交的样子）
+    git restore .              # 丢弃所有还没提交的改动
+                               # ⚠️ 上面两条：改动会消失，想清楚再用
+    git revert 哈希            # 撤销某次提交，生成一条反向提交，安全，推荐
+    git reset --hard 哈希      # ⚠️ 危险：本地直接退回那个版本，未提交的改动全丢
+
+不确定就用 git revert。
+
+
+【7】常见报错怎么办
+--------------------------------------------------------------------
+bash: E:STM32xxx: command not found
+    原因：在 Git Bash 里直接敲了 Windows 路径
+    办法：改成 cd /e/STM32/xxx
+
+fatal: not a git repository
+    原因：当前目录不是仓库
+    办法：cd 到工程目录再执行
+
+src refspec main does not match any
+    原因：本地分支不叫 main（可能叫 master）
+    办法：git branch 看真实名字，或 git branch -M main
+
+Updates were rejected ... fetch first
+    原因：GitHub 上有你本地没有的提交（比如你在网页上改过文件）
+    办法：git pull --rebase origin main，处理完后 git push
+
+fatal: The current branch xx has no upstream branch
+    原因：这个分支第一次推送没加 -u
+    办法：按提示执行 git push -u origin xx
+
+Permission denied (publickey)
+    原因：SSH 没认上
+    办法：先跑 "C:/Windows/System32/OpenSSH/ssh.exe" -T git@github.com
+          看到 Hi xx893! 才算正常
+
+warning: LF will be replaced by CRLF
+    原因：Windows 换行符自动转换
+    办法：无视，不影响
+
+untracked working tree files would be overwritten
+    原因：本地有同名文件，git 不敢覆盖
+    办法：先把本地那个文件改名或删掉，再执行原命令
+
+Please tell me who you are
+    原因：没配 user.name / user.email
+    办法：见【8】
+
+nothing to commit
+    原因：没有改动，或者文件忘了保存
+    办法：确认是否真的改了；没改就不用提交
+
+
+【8】环境设置（已配好，只有换电脑才需要重做）
+--------------------------------------------------------------------
+    git config --global user.name "xx893"
+    git config --global user.email "3454053352@qq.com"
+    git config --global init.defaultBranch main
+    git config --global core.sshCommand "C:/Windows/System32/OpenSSH/ssh.exe"
+    git config --global --list          # 查看当前全局配置
+
+生成与验证密钥：
+    "C:/Windows/System32/OpenSSH/ssh-keygen.exe" -t ed25519 -C "3454053352@qq.com"
+    cat ~/.ssh/id_ed25519.pub     # 整行贴到 GitHub → Settings → SSH and GPG keys
+    "C:/Windows/System32/OpenSSH/ssh.exe" -T git@github.com    # 成功显示 Hi xx893!
+
+
+【9】关于 .gitignore
+--------------------------------------------------------------------
+· 作用：告诉 git 哪些文件不要上传（编译产物、本机配置、临时文件）
+· 位置：工程根目录下的 .gitignore，对整个文件夹和所有子文件夹生效
+· 只在文件还没被提交过时有效。已经传上去过的，要先用
+      git rm -r --cached 文件名
+  把它从仓库里移除（本地文件保留），再 commit
+· 现在挡掉了：Objects/  Listings/  DebugConfig/  *.uvoptx  *.uvguix.*
+              *.axf  *.hex  *.o  *.crf  等
+· 想放行某个被忽略的文件（比如给别人烧录用的 .hex），在该行下面写：
+      !路径/文件名.hex
+
+
+【10】几条铁律
+--------------------------------------------------------------------
+1. 上传 = add → commit → push，三步缺一不可
+2. .gitignore 必须放在第一次 git add . 之前
+3. Keil 里新建的文件，一定要 git add .
+4. 提交说明写清楚做了什么
+5. 报错先读提示，Git 通常会直接告诉你下一条命令敲什么
+6. 工程和 .git 现在都在 U 盘上：U 盘丢了本地就没了，
+   GitHub 上那份是靠 push 保住的，所以改完记得推

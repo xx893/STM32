@@ -1,0 +1,27 @@
+# Keil MDK-ARM 编译输出
+Objects/
+Listings/
+DebugConfig/
+*.o
+*.axf
+*.elf
+*.hex
+*.crf
+*.d
+*.dep
+*.lnp
+*.lst
+*.map
+*.htm
+*.sct
+*.tra
+*.scr
+*.build_log.htm
+*.bak
+# Keil 本机配置（你的工程里就有这两个，必须挡掉）
+*.uvoptx
+*.uvguix.*
+*.uvgui.*
+# 调试器临时文件
+JLinkLog.txt
+JLinkSettings.ini
